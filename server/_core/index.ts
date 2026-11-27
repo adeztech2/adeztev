@@ -8,18 +8,67 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 
+const MEGAN_BASE_URL = "https://apis.megan.qzz.io/api/v2";
+
+async function proxyMegan(path: string) {
+  const apiKey = process.env.MEGAN_API_KEY;
+  if (!apiKey) throw new Error("Megan Movies API is not configured");
+
+  const url = new URL(`${MEGAN_BASE_URL}/${path.replace(/^\//, "")}`);
+  url.searchParams.set("api_key", apiKey);
+  const response = await fetch(url);
+  const payload = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const error = new Error("Megan Movies API request failed") as Error & { status?: number };
+    error.status = response.status;
+    throw error;
+  }
+
+  return payload;
+}
+
+function sendProxyError(res: express.Response, error: unknown) {
+  const status = typeof error === "object" && error && "status" in error && typeof error.status === "number"
+    ? error.status
+    : 502;
+  const message = error instanceof Error ? error.message : "Upstream request failed";
+  res.status(status).json({ error: message });
+}
+
 async function startServer() {
   const app = express();
   const server = createServer(app);
-  // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
   app.get("/api/platform/config.js", (_req, res) => {
     res.set("Cache-Control", "no-store").type("application/javascript").send(publicPlatformScript());
   });
+
+  app.get("/api/movies/home", async (_req, res) => {
+    try {
+      res.json(await proxyMegan("movies/home"));
+    } catch (error) {
+      sendProxyError(res, error);
+    }
+  });
+
+  app.get("/api/movies/details/:type/:id", async (req, res) => {
+    const { type, id } = req.params;
+    if (!/^\d+$/.test(id) || !["movie", "tv"].includes(type)) {
+      res.status(400).json({ error: "Invalid title reference" });
+      return;
+    }
+
+    try {
+      res.json(await proxyMegan(`movies/${type}/${id}`));
+    } catch (error) {
+      sendProxyError(res, error);
+    }
+  });
+
   registerOAuthRoutes(app);
-  // tRPC API
   app.use(
     "/api/trpc",
     createExpressMiddleware({
@@ -27,7 +76,7 @@ async function startServer() {
       createContext,
     })
   );
-  // development mode uses Vite, production mode uses static files
+
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
