@@ -1,6 +1,7 @@
 {
   "routes": [
     { "path": "/", "title": "ADEZ TV" },
+    { "path": "/watch/:type/:id", "title": "Watch on ADEZ TV" },
     { "path": "/404", "title": "Not found" }
   ]
 }

@@ -125,6 +125,35 @@ kbd { border: 1px solid rgba(255,255,255,.12); border-radius: 4px; color: #686e7
 .related-track .poster-frame { border-radius: 6px; }
 .related-track span { display: block; overflow: hidden; margin-top: 7px; color: #b8bdc8; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .mobile-nav { display: none; }
+.watch-page { min-height: 100vh; background: radial-gradient(circle at 78% 8%, rgba(200,255,61,.08), transparent 28%), #080a10; }
+.watch-topbar { height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 5vw; border-bottom: 1px solid rgba(255,255,255,.07); background: rgba(8,10,16,.84); backdrop-filter: blur(18px); }
+.watch-back, .watch-close { display: inline-flex; align-items: center; gap: 8px; color: #aab0be; font-size: 12px; text-decoration: none; }
+.watch-back:hover, .watch-close:hover { color: #c8ff3d; }
+.watch-wordmark { color: #f5f6f8; font: 700 20px 'Space Grotesk', sans-serif; letter-spacing: -.08em; }
+.watch-wordmark small { color: #c8ff3d; font-size: 10px; letter-spacing: .18em; margin-left: 3px; }
+.watch-main { width: min(1120px, 90vw); margin: 0 auto; padding: 55px 0 80px; }
+.watch-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 25px; }
+.watch-heading h1 { margin: 12px 0 8px; font: 600 clamp(30px, 5vw, 58px)/1 'Space Grotesk', sans-serif; letter-spacing: -.07em; }
+.watch-heading p { margin: 0; color: #858b9a; font-size: 12px; }
+.watch-heading-icon { color: #c8ff3d; opacity: .8; }
+.player-frame { position: relative; min-height: min(64vw, 630px); display: grid; place-items: center; overflow: hidden; border: 1px solid rgba(255,255,255,.1); border-radius: 13px; background: #020305; box-shadow: 0 25px 90px rgba(0,0,0,.42); }
+.video-player { display: block; width: 100%; max-height: min(64vw, 630px); background: #000; }
+.player-message { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px; min-height: 320px; padding: 30px; color: #aab0be; text-align: center; }
+.player-message small { max-width: 500px; color: #777d8d; font-size: 11px; }
+.watch-controls { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-top: 18px; }
+.episode-controls { display: flex; align-items: flex-end; gap: 9px; flex-wrap: wrap; }
+.episode-controls label { display: flex; flex-direction: column; gap: 6px; color: #858b9a; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; }
+.episode-controls input { width: 74px; height: 38px; padding: 0 10px; color: #f5f6f8; border: 1px solid rgba(255,255,255,.12); border-radius: 7px; outline: none; background: rgba(255,255,255,.06); }
+.episode-controls input:focus { border-color: rgba(200,255,61,.5); }
+.source-picker { display: flex; align-items: center; justify-content: flex-end; gap: 7px; flex-wrap: wrap; }
+.source-picker .eyebrow { width: 100%; justify-content: flex-end; }
+.source-picker button { padding: 8px 10px; color: #aab0be; border: 1px solid rgba(255,255,255,.1); border-radius: 6px; background: rgba(255,255,255,.05); font-size: 10px; }
+.source-picker button:hover, .source-picker button.active { color: #c8ff3d; border-color: rgba(200,255,61,.45); background: rgba(200,255,61,.08); }
+.watch-overview { max-width: 720px; margin: 28px 0 20px; color: #8e94a5; font-size: 13px; line-height: 1.7; }
+.watch-note { margin: 18px 0 0; color: #e6bf8b; font-size: 12px; }
+.watch-close { margin-top: 18px; padding: 0; border: 0; background: transparent; }
+.watch-empty { min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 15px; color: #8e94a5; }
+.watch-empty h1 { color: #f5f6f8; font: 500 32px 'Space Grotesk', sans-serif; }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 @media (max-width: 760px) {
@@ -162,4 +191,13 @@ kbd { border: 1px solid rgba(255,255,255,.12); border-radius: 4px; color: #686e7
   .detail-content { margin-top: -75px; padding: 0 22px 32px; }
   .detail-content h2 { font-size: 39px; }
   .detail-overview { font-size: 13px; }
+  .watch-topbar { height: 64px; padding: 0 18px; }
+  .watch-main { width: auto; padding: 34px 18px 100px; }
+  .watch-heading { align-items: flex-start; }
+  .watch-heading-icon { display: none; }
+  .player-frame { min-height: 55vw; margin: 0 -18px; border-right: 0; border-left: 0; border-radius: 0; }
+  .video-player { max-height: none; }
+  .watch-controls { flex-direction: column; }
+  .source-picker { justify-content: flex-start; }
+  .source-picker .eyebrow { justify-content: flex-start; }
 }

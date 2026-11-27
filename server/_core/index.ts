@@ -10,12 +10,13 @@ import { serveStatic, setupVite } from "./vite";
 
 const MEGAN_BASE_URL = "https://apis.megan.qzz.io/api/v2";
 
-async function proxyMegan(path: string) {
+async function proxyMegan(path: string, params?: Record<string, string>) {
   const apiKey = process.env.MEGAN_API_KEY;
   if (!apiKey) throw new Error("Megan Movies API is not configured");
 
   const url = new URL(`${MEGAN_BASE_URL}/${path.replace(/^\//, "")}`);
   url.searchParams.set("api_key", apiKey);
+  Object.entries(params || {}).forEach(([key, value]) => url.searchParams.set(key, value));
   const response = await fetch(url);
   const payload = await response.json().catch(() => null);
 
@@ -63,6 +64,30 @@ async function startServer() {
 
     try {
       res.json(await proxyMegan(`movies/${type}/${id}`));
+    } catch (error) {
+      sendProxyError(res, error);
+    }
+  });
+
+  app.get("/api/movies/stream/:type/:id", async (req, res) => {
+    const { type, id } = req.params;
+    const { season, episode } = req.query;
+    if (!/^\d+$/.test(id) || !["movie", "tv"].includes(type)) {
+      res.status(400).json({ error: "Invalid title reference" });
+      return;
+    }
+    if (type === "tv" && (!/^[1-9]\d*$/.test(String(season || "")) || !/^[1-9]\d*$/.test(String(episode || "")))) {
+      res.status(400).json({ error: "TV streams require positive season and episode numbers" });
+      return;
+    }
+
+    try {
+      const params: Record<string, string> = { subjectId: id };
+      if (type === "tv") {
+        params.se = String(season);
+        params.ep = String(episode);
+      }
+      res.json(await proxyMegan("moviebox/stream", params));
     } catch (error) {
       sendProxyError(res, error);
     }

@@ -169,6 +169,7 @@ function DetailSheet({
   onClose,
   onToggleSaved,
   onOpen,
+  onWatch,
 }: {
   item: CatalogItem;
   detail?: MovieDetails;
@@ -177,6 +178,7 @@ function DetailSheet({
   onClose: () => void;
   onToggleSaved: (item: CatalogItem) => void;
   onOpen: (item: CatalogItem) => void;
+  onWatch: (item: CatalogItem) => void;
 }) {
   const display = detail ?? item;
   return (
@@ -190,7 +192,7 @@ function DetailSheet({
           <div className="detail-meta"><span>{display.year || "—"}</span><span className="meta-dot">•</span><span>{display.type === "tv" ? "Series" : "Movie"}</span>{detail?.runtime ? <><span className="meta-dot">•</span><span>{detail.runtime} min</span></> : null}<Rating value={display.rating} /></div>
           {detail?.tagline ? <p className="detail-tagline">{detail.tagline}</p> : null}
           {loading ? <div className="detail-loading"><Loader2 className="spin" size={18} /> Loading title profile…</div> : <p className="detail-overview">{detail?.overview || fallbackCopy}</p>}
-          <div className="detail-actions"><button className="primary-btn"><Play size={17} fill="currentColor" /> Watch now</button><button className={`secondary-btn ${saved ? "active" : ""}`} onClick={() => onToggleSaved(item)}>{saved ? <Check size={17} /> : <Plus size={17} />} {saved ? "In My List" : "Add to My List"}</button></div>
+          <div className="detail-actions"><button className="primary-btn" onClick={() => onWatch(item)}><Play size={17} fill="currentColor" /> Watch now</button><button className={`secondary-btn ${saved ? "active" : ""}`} onClick={() => onToggleSaved(item)}>{saved ? <Check size={17} /> : <Plus size={17} />} {saved ? "In My List" : "Add to My List"}</button></div>
           {detail?.genres?.length ? <div className="genre-list">{detail.genres.map(genre => <span key={genre}>{genre}</span>)}</div> : null}
           {detail?.cast?.length ? <div className="cast-strip"><span className="eyebrow">Featuring</span><div className="cast-row">{detail.cast.slice(0, 5).map(person => <div className="cast-item" key={person.id}><div className="cast-photo">{person.photo ? <img src={person.photo} alt="" /> : <span>{person.name[0]}</span>}</div><div><b>{person.name}</b><small>{person.character}</small></div></div>)}</div></div> : null}
           {detail?.similar?.length ? <div className="related"><div className="rail-heading"><div><span className="eyebrow">Keep exploring</span><h3>Related titles</h3></div></div><div className="related-track">{detail.similar.slice(0, 6).map(related => <button key={related.id} onClick={() => onOpen(related)}><Poster item={related} /><span>{related.title}</span></button>)}</div></div> : null}
@@ -251,6 +253,10 @@ export default function Home() {
     setSaved(current => current.includes(id) ? current.filter(value => value !== id) : [...current, id]);
   };
 
+  const watchItem = (item: CatalogItem) => {
+    window.location.href = `/watch/${item.type}/${item.id}`;
+  };
+
   const tabRows = useMemo(() => {
     if (tab === "movies") return rows.filter(row => row.type === "movie").slice(0, 5);
     if (tab === "series") return rows.filter(row => row.type === "tv").slice(0, 5);
@@ -280,7 +286,7 @@ export default function Home() {
       {loading ? <div className="loading-state"><Loader2 className="spin" size={22} /><span>Finding your next watch…</span></div> : error ? <div className="error-state"><span>{error}</span><button onClick={() => window.location.reload()}>Retry</button></div> : (
         <>
           {tab === "home" && !query && !genre && featured ? <section className="hero" style={{ backgroundImage: `linear-gradient(90deg, rgba(8,10,16,1) 0%, rgba(8,10,16,.9) 30%, rgba(8,10,16,.12) 78%), linear-gradient(0deg, #080a10 0%, transparent 48%), url(${detail?.backdrop || featured.poster})` }}>
-            <div className="hero-copy"><span className="eyebrow accent"><span className="live-dot" /> Tonight’s signal</span><h1>{featured.title}</h1><div className="hero-meta"><span>{featured.year}</span><span>•</span><span>{featured.type === "tv" ? "Series" : "Movie"}</span><Rating value={featured.rating} /></div><p>{detail?.overview || "A fresh signal from the catalog, selected for your next late-night watch."}</p><div className="hero-actions"><button className="primary-btn" onClick={() => openDetail(featured)}><Play size={17} fill="currentColor" /> Watch now</button><button className="ghost-btn" onClick={() => openDetail(featured)}><Info size={17} /> More info</button></div></div><div className="hero-credit"><span>Featured on</span><b>ADEZ TV</b><small>UPDATED DAILY</small></div>
+            <div className="hero-copy"><span className="eyebrow accent"><span className="live-dot" /> Tonight’s signal</span><h1>{featured.title}</h1><div className="hero-meta"><span>{featured.year}</span><span>•</span><span>{featured.type === "tv" ? "Series" : "Movie"}</span><Rating value={featured.rating} /></div><p>{detail?.overview || "A fresh signal from the catalog, selected for your next late-night watch."}</p><div className="hero-actions"><button className="primary-btn" onClick={() => watchItem(featured)}><Play size={17} fill="currentColor" /> Watch now</button><button className="ghost-btn" onClick={() => openDetail(featured)}><Info size={17} /> More info</button></div></div><div className="hero-credit"><span>Featured on</span><b>ADEZ TV</b><small>UPDATED DAILY</small></div>
           </section> : null}
 
           <main className="content-wrap">
@@ -291,7 +297,7 @@ export default function Home() {
       )}
 
       <nav className="mobile-nav" aria-label="Mobile navigation">{(["home", "movies", "series", "my-list"] as Tab[]).map(item => <button key={item} className={tab === item ? "active" : ""} onClick={() => navigate(item)}>{item === "home" ? <Clapperboard size={19} /> : item === "movies" ? <Film size={19} /> : item === "series" ? <Tv size={19} /> : <Heart size={19} />}<span>{item === "my-list" ? "My List" : item[0].toUpperCase() + item.slice(1)}</span></button>)}</nav>
-      {selected ? <DetailSheet item={selected} detail={detail} loading={detailLoading} saved={savedIds.has(`${selected.type}-${selected.id}`)} onClose={() => setSelected(null)} onToggleSaved={toggleSaved} onOpen={openDetail} /> : null}
+      {selected ? <DetailSheet item={selected} detail={detail} loading={detailLoading} saved={savedIds.has(`${selected.type}-${selected.id}`)} onClose={() => setSelected(null)} onToggleSaved={toggleSaved} onOpen={openDetail} onWatch={watchItem} /> : null}
     </div>
   );
 }
