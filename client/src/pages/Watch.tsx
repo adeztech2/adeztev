@@ -17,7 +17,7 @@ type Title = {
 };
 
 type DetailPayload = { data?: { movie?: Title; tv?: Title } };
-type Stream = { url?: string; format?: string; quality?: string; resolution?: string; size?: number; duration?: number };
+type Stream = { url?: string; proxy_url?: string; proxyUrl?: string; format?: string; quality?: string; resolution?: string; size?: number; duration?: number };
 type StreamPayload = { data?: { streams?: Stream[]; status?: boolean; hint?: string }; error?: string };
 
 async function fetchJson<T>(url: string): Promise<T> {
@@ -29,6 +29,10 @@ async function fetchJson<T>(url: string): Promise<T> {
 
 function streamLabel(stream: Stream, index: number) {
   return stream.quality || stream.resolution || stream.format || `Source ${index + 1}`;
+}
+
+function streamSource(stream?: Stream) {
+  return stream?.proxy_url || stream?.proxyUrl || stream?.url || "";
 }
 
 export default function Watch() {
@@ -69,7 +73,7 @@ export default function Watch() {
     }
     try {
       const payload = await fetchJson<StreamPayload>(`/api/movies/stream/${titleType}/${id}?${params}`);
-      const available = payload.data?.streams?.filter(stream => typeof stream.url === "string" && stream.url.length > 0) || [];
+      const available = payload.data?.streams?.filter(stream => streamSource(stream).length > 0) || [];
       setHint(payload.data?.hint || "");
       if (!available.length) {
         setError(titleType === "tv" ? `No stream found for season ${season}, episode ${episode}.` : "No streaming source is available for this title.");
@@ -88,7 +92,8 @@ export default function Watch() {
 
   const videoType = useMemo(() => {
     const format = selectedStream?.format?.toLowerCase() || "";
-    return format.includes("m3u8") || selectedStream?.url?.includes(".m3u8") ? "application/x-mpegURL" : "video/mp4";
+    const source = streamSource(selectedStream);
+    return format.includes("m3u8") || source.includes(".m3u8") ? "application/x-mpegURL" : "video/mp4";
   }, [selectedStream]);
 
   if (!validId) {
@@ -112,12 +117,12 @@ export default function Watch() {
         </div>
 
         <section className="player-frame" aria-label={`${title?.title || "Title"} video player`}>
-          {loadingStreams ? <div className="player-message"><Loader2 className="spin" size={28} /><span>Connecting to the stream…</span></div> : selectedStream ? <video key={selectedStream.url} className="video-player" controls autoPlay playsInline poster={title?.backdrop || title?.poster || undefined}><source src={selectedStream.url} type={videoType} />Your browser does not support HTML5 video playback.</video> : <div className="player-message"><Film size={30} /><span>{error || "No stream loaded."}</span>{hint ? <small>{hint}</small> : null}<button className="secondary-btn" onClick={() => void loadStreams()}><RefreshCw size={15} /> Try again</button></div>}
+          {loadingStreams ? <div className="player-message"><Loader2 className="spin" size={28} /><span>Connecting to the stream…</span></div> : selectedStream ? <video key={streamSource(selectedStream)} className="video-player" controls autoPlay playsInline poster={title?.backdrop || title?.poster || undefined}><source src={streamSource(selectedStream)} type={videoType} />Your browser does not support HTML5 video playback.</video> : <div className="player-message"><Film size={30} /><span>{error || "No stream loaded."}</span>{hint ? <small>{hint}</small> : null}<button className="secondary-btn" onClick={() => void loadStreams()}><RefreshCw size={15} /> Try again</button></div>}
         </section>
 
         <div className="watch-controls">
           {titleType === "tv" ? <div className="episode-controls"><label>Season <input min={1} type="number" value={season} onChange={event => setSeason(Math.max(1, Number(event.target.value) || 1))} /></label><label>Episode <input min={1} type="number" value={episode} onChange={event => setEpisode(Math.max(1, Number(event.target.value) || 1))} /></label><button className="primary-btn" onClick={() => void loadStreams()} disabled={loadingStreams}><RefreshCw size={15} /> Load episode</button></div> : null}
-          {streams.length > 1 ? <div className="source-picker"><span className="eyebrow">Available sources</span>{streams.map((stream, index) => <button key={`${stream.url}-${index}`} className={stream.url === selectedStream?.url ? "active" : ""} onClick={() => setSelectedStream(stream)}>{streamLabel(stream, index)}</button>)}</div> : null}
+          {streams.length > 1 ? <div className="source-picker"><span className="eyebrow">Available sources</span>{streams.map((stream, index) => <button key={`${streamSource(stream)}-${index}`} className={streamSource(stream) === streamSource(selectedStream) ? "active" : ""} onClick={() => setSelectedStream(stream)}>{streamLabel(stream, index)}</button>)}</div> : null}
         </div>
 
         {error && selectedStream ? <p className="watch-note">{error}</p> : null}
