@@ -10,7 +10,7 @@ import { serveStatic, setupVite } from "./vite";
 
 const MEGAN_BASE_URL = "https://apis.megan.qzz.io/api/v2";
 
-async function proxyMegan(path: string, params?: Record<string, string>) {
+async function proxyMegan(path: string, params?: Record<string, string>, preserveErrorPayload = false) {
   const apiKey = process.env.MEGAN_API_KEY;
   if (!apiKey) throw new Error("Megan Movies API is not configured");
 
@@ -20,7 +20,7 @@ async function proxyMegan(path: string, params?: Record<string, string>) {
   const response = await fetch(url);
   const payload = await response.json().catch(() => null);
 
-  if (!response.ok) {
+  if (!response.ok && !preserveErrorPayload) {
     const error = new Error("Megan Movies API request failed") as Error & { status?: number };
     error.status = response.status;
     throw error;
@@ -87,7 +87,7 @@ async function startServer() {
         params.se = String(season);
         params.ep = String(episode);
       }
-      res.json(await proxyMegan("moviebox/stream", params));
+      res.set("Cache-Control", "no-store").json(await proxyMegan("moviebox/stream", params, true));
     } catch (error) {
       sendProxyError(res, error);
     }
